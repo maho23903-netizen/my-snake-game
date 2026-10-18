@@ -1,15 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة الأفعى للموبايل</title>
+    <title>المبرمج ابو عبدو محو - لعبة الأفعى</title>
     <style>
-        body { background: #222; color: white; text-align: center; font-family: sans-serif; margin: 0; padding: 10px; }
-        canvas { background: #111; border: 3px solid #00ff00; max-width: 90vw; max-height: 40vh; }
-        .controls { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(3, 70px); gap: 10px; justify-content: center; margin-top: 15px; }
-        .btn { background: #444; color: white; border: none; border-radius: 10px; font-size: 24px; font-weight: bold; cursor: pointer; -webkit-user-select: none; user-select: none; }
-        .btn:active { background: #00ff00; color: black; }
+        body { 
+            background: #1e1e2a; 
+            color: white; 
+            text-align: center; 
+            font-family: sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { 
+            margin: 5px 0 15px 0; 
+            font-size: 26px; 
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0,255,0,0.3);
+        }
+        .score-board { 
+            background: #28283d;
+            border: 2px solid #3d3d5c;
+            border-radius: 8px;
+            padding: 8px 20px;
+            display: flex; 
+            justify-content: center; 
+            gap: 30px; 
+            margin-bottom: 15px; 
+            font-size: 20px; 
+            font-weight: bold;
+            min-width: 320px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        #score { color: #55ff55; }
+        #highScore { color: #ff5555; }
+        
+        /* تصميم الحاوية والكانفاس المربع */
+        .canvas-container {
+            position: relative;
+            background: #31314d;
+            padding: 4px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+        canvas { 
+            display: block;
+            max-width: 90vw; 
+            max-height: 42vh; 
+            border-radius: 8px;
+        }
+        
+        /* أزرار اللمس للموبايل */
+        .controls { 
+            display: grid; 
+            grid-template-columns: repeat(3, 68px); 
+            grid-template-rows: repeat(3, 68px); 
+            gap: 12px; 
+            justify-content: center; 
+            margin-top: 20px; 
+        }
+        .btn { 
+            background: #2d2d44; 
+            color: white; 
+            border: 2px solid #444466; 
+            border-radius: 18px; 
+            font-size: 24px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            -webkit-user-select: none; 
+            user-select: none; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4); 
+            transition: all 0.1s ease;
+        }
+        .btn:active { 
+            background: #55ff55; 
+            color: black; 
+            border-color: #55ff55;
+            box-shadow: 0 0 12px #55ff55; 
+        }
         .up { grid-column: 2; }
         .left { grid-column: 1; grid-row: 2; }
         .right { grid-column: 3; grid-row: 2; }
@@ -17,11 +89,18 @@
     </style>
 </head>
 <body>
-    <h1>لعبة الأفعى 🐍</h1>
-    <div id="score" style="font-size: 22px; margin-bottom: 10px;">النقاط: 0</div>
-    <canvas id="game" width="400" height="400"></canvas>
 
-    <!-- أزرار التحكم باللمس للموبايل -->
+    <h1>(( المبرمج ابو عبدو محو )) 👑</h1>
+    
+    <div class="score-board">
+        <div id="score">النقاط: 0</div>
+        <div id="highScore">الأعلى: 0</div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="game" width="400" height="400"></canvas>
+    </div>
+
     <div class="controls">
         <button class="btn up" onclick="changeDir('up')">▲</button>
         <button class="btn left" onclick="changeDir('left')">◀</button>
@@ -32,38 +111,119 @@
     <script>
         const canvas = document.getElementById("game");
         const ctx = canvas.getContext("2d");
+        
+        const gridCount = 20;
+        const tileSize = canvas.width / gridCount;
+
         let snake = [{x: 10, y: 10}];
         let food = {x: 5, y: 5};
         let dx = 0, dy = 0, score = 0;
         
+        // تبدأ الحركة بطيئة ومريحة جداً بناءً على طلبك
+        let baseSpeed = 160; 
+        let currentSpeed = baseSpeed;
+        let gameTimeout;
+
+        let savedHighScore = localStorage.getItem("snakeHighScore") || 0;
+        document.getElementById("highScore").innerText = "الأعلى: " + savedHighScore;
+        
         function main() {
             if (checkEnd()) { 
-                alert("خسرت! اضغط موافق للإعادة"); 
-                snake = [{x: 10, y: 10}]; dx=0; dy=0; score=0; 
-                document.getElementById("score").innerText = "النقاط: 0"; 
+                if (score > savedHighScore) {
+                    savedHighScore = score;
+                    localStorage.setItem("snakeHighScore", savedHighScore);
+                    document.getElementById("highScore").innerText = "الأعلى: " + savedHighScore;
+                    alert("🏆 عشت يا مبرمج! حققت رقماً قياسياً جديداً: " + score);
+                } else {
+                    alert("💥 خسرت! اضغط موافق لتجرب مجدداً يا بطل."); 
+                }
+                resetGame();
             }
-            setTimeout(function() {
-                ctx.fillStyle = "#111"; ctx.fillRect(0, 0, 400, 400);
-                ctx.fillStyle = "red"; ctx.fillRect(food.x*20, food.y*20, 18, 18);
-                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-                snake.unshift(head);
-                if (snake[0].x === food.x && snake[0].y === food.y) { 
-                    score++; 
-                    document.getElementById("score").innerText = "النقاط: " + score; 
-                    food = {x: Math.floor(Math.random()*20), y: Math.floor(Math.random()*20)}; 
-                } else { snake.pop(); }
-                ctx.fillStyle = "lime"; snake.forEach(p => ctx.fillRect(p.x*20, p.y*20, 18, 18));
+            
+            gameTimeout = setTimeout(function() {
+                drawBackground();
+                drawFood();
+                moveSnake();
+                drawSnake();
                 main();
-            }, 120);
+            }, currentSpeed);
+        }
+        
+        // رسم خلفية مربعات الشطرنج البنفسجية الداكنة مثل الصورة تماماً
+        function drawBackground() {
+            for (let r = 0; r < gridCount; r++) {
+                for (let c = 0; c < gridCount; c++) {
+                    if ((r + c) % 2 === 0) {
+                        ctx.fillStyle = "#2c2c44";
+                    } else {
+                        ctx.fillStyle = "#33334d";
+                    }
+                    ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
+                }
+            }
+        }
+
+        // رسم الأفعى بلون أخضر عشبي فاقع ومقسمة لمربعات واضحة
+        function drawSnake() {
+            snake.forEach((part, index) => {
+                ctx.fillStyle = index === 0 ? "#4cd94c" : "#55ff55"; 
+                ctx.fillRect(part.x * tileSize, part.y * tileSize, tileSize, tileSize);
+                
+                // إضافة إطار خفيف جداً بين المربعات لتظهر مقسمة باحترافية
+                ctx.strokeStyle = "#2c2c44";
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(part.x * tileSize, part.y * tileSize, tileSize, tileSize);
+            });
+        }
+
+        function moveSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+            
+            if (snake[0].x === food.x && snake[0].y === food.y) { 
+                score++; 
+                document.getElementById("score").innerText = "النقاط: " + score; 
+                generateFoodLocation();
+                
+                // السرعة ترتفع حبة صغييييرة جداً (8 ملي ثانية فقط) كل 6 نقاط بناءً على طلبك
+                if (score % 6 === 0 && currentSpeed > 60) {
+                    currentSpeed -= 8;
+                }
+            } else { 
+                snake.pop(); 
+            }
+        }
+
+        // رسم الأكل على شكل تفاحة حقيقية 🍎 منسقة داخل المربع
+        function drawFood() {
+            ctx.font = `${tileSize - 2}px Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("🍎", food.x * tileSize + tileSize/2, food.y * tileSize + tileSize/2);
+        }
+
+        function generateFoodLocation() {
+            food = {
+                x: Math.floor(Math.random() * gridCount),
+                y: Math.floor(Math.random() * gridCount)
+            };
+            // التأكد أن التفاحة لا تظهر فوق جسم الأفعى
+            for (let part of snake) {
+                if (part.x === food.x && part.y === food.y) {
+                    generateFoodLocation();
+                    break;
+                }
+            }
         }
         
         function checkEnd() {
-            if (snake[0].x < 0 || snake[0].x >= 20 || snake[0].y < 0 || snake[0].y >= 20) return true;
-            for (let i = 1; i < snake.length; i++) if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+            if (snake[0].x < 0 || snake[0].x >= gridCount || snake[0].y < 0 || snake[0].y >= gridCount) return true;
+            for (let i = 1; i < snake.length; i++) {
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+            }
             return false;
         }
 
-        // دالة التحكم باللمس
         function changeDir(dir) {
             if (dir === 'up' && dy === 0) { dx = 0; dy = -1; }
             if (dir === 'down' && dy === 0) { dx = 0; dy = 1; }
@@ -71,7 +231,13 @@
             if (dir === 'right' && dx === 0) { dx = 1; dy = 0; }
         }
 
-        // أزرار الكيبورد للكمبيوتر تظل تعمل أيضاً
+        function resetGame() {
+            clearTimeout(gameTimeout);
+            snake = [{x: 10, y: 10}]; dx = 0; dy = 0; score = 0; 
+            currentSpeed = baseSpeed;
+            document.getElementById("score").innerText = "النقاط: 0";
+        }
+
         window.addEventListener("keydown", e => {
             if (e.key === "ArrowUp") changeDir('up');
             if (e.key === "ArrowDown") changeDir('down');
@@ -79,6 +245,7 @@
             if (e.key === "ArrowRight") changeDir('right');
         });
         
+        drawBackground();
         main();
     </script>
 </body>
