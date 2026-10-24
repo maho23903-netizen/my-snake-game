@@ -49,7 +49,6 @@
             display: block;
             margin: 0 auto;
         }
-        /* منطقة التحكم للموبايل */
         #controls-container {
             margin-top: 15px;
             height: 140px;
@@ -57,7 +56,6 @@
             justify-content: center;
             align-items: center;
         }
-        /* نمط أزرار الأسهم */
         #button-controls {
             display: grid;
             grid-template-columns: repeat(3, 50px);
@@ -82,7 +80,6 @@
         #btn-right { grid-column: 3; }
         #btn-down { grid-column: 2; }
 
-        /* نمط الدركسيون المتطور */
         #steering-wheel {
             width: 120px;
             height: 120px;
@@ -93,14 +90,13 @@
             cursor: grab;
             box-shadow: 0 0 15px rgba(209, 179, 255, 0.4);
             transition: transform 0.1s linear;
-            display: none; /* مخفي افتراضياً */
+            display: none;
         }
         #steering-wheel::before, #steering-wheel::after {
             content: '';
             position: absolute;
             background: #d1b3ff;
         }
-        /* عوارض الدركسيون الداخية ليظهر مثل سيارة حقيقية */
         #steering-wheel::before { width: 100%; height: 6px; top: 50%; left: 0; transform: translateY(-50%); }
         #steering-wheel::after { width: 6px; height: 50%; bottom: 0; left: 50%; transform: translateX(-50%); }
         #wheel-center {
@@ -137,7 +133,6 @@
     <canvas id="game-canvas" width="400" height="400"></canvas>
 
     <div id="controls-container">
-        <!-- أزرار الأسهم الافتراضية -->
         <div id="button-controls">
             <div class="btn" id="btn-up">▲</div>
             <div class="btn" id="btn-left">◀</div>
@@ -145,7 +140,6 @@
             <div class="btn" id="btn-down">▼</div>
         </div>
 
-        <!-- دركسيون السيارة المطور -->
         <div id="steering-wheel">
             <div id="wheel-center"></div>
         </div>
@@ -158,10 +152,11 @@
         const cellSize = 20;
         const gridCount = canvas.width / cellSize;
         
-        let snake = [{x: 10, y: 10}, {x: 10, y: 11}, {x: 10, y: 12}];
+        let snake = [];
         let apple = {x: 5, y: 5};
         let dx = 0;
-        let dy = -1;
+        let dy = 0; // جعلناها 0 لتقف الدودة في مكانها عند البداية ولا تموت فوراً
+        let gameStarted = false; // متغير للتحقق هل بدأ اللاعب الحركة أم لا
         
         let score = 0;
         let highScore = 0;
@@ -169,7 +164,7 @@
         let applesEatenInLevel = 0;
         let applesNeededForLevel = generateRandomApples();
         
-        let baseSpeed = 150;
+        let baseSpeed = 160;
         let currentSpeed = baseSpeed;
         let gameInterval;
 
@@ -177,18 +172,42 @@
             return Math.floor(Math.random() * 4) + 2; 
         }
 
-        function startGame() {
+        function initGame() {
+            // وضع الدودة في منتصف الشاشة تماماً لتبدأ بأمان
+            snake = [
+                {x: 10, y: 10},
+                {x: 10, y: 11},
+                {x: 10, y: 12}
+            ];
+            dx = 0;
+            dy = 0;
+            gameStarted = false;
+            score = 0;
+            applesEatenInLevel = 0;
             updateScoreboard();
             generateApple();
+            drawGame(); // رسم اللوحة لأول مرة ليرى اللاعب الدودة واقفة جاهزة
+        }
+
+        function startGameLoop() {
             clearInterval(gameInterval);
             gameInterval = setInterval(gameLoop, currentSpeed);
         }
 
         function gameLoop() {
+            // إذا لم يضغط اللاعب على أي اتجاه بعد، لا تحرك الدودة بل ارسمها فقط
+            if (dx === 0 && dy === 0) {
+                drawGame();
+                return;
+            }
+
             moveSnake();
             if (checkGameOver()) {
                 alert(`حاول مجدداً يا بطل! أعلى نتيجة لك هي: ${highScore}`);
-                resetGame();
+                currentLevel = 1;
+                currentSpeed = baseSpeed;
+                initGame();
+                startGameLoop();
                 return;
             }
             checkApple();
@@ -218,16 +237,16 @@
                 if (score > highScore) highScore = score;
 
                 if (score % 6 === 0) {
-                    currentSpeed = Math.max(60, currentSpeed - 12);
-                    resetInterval();
+                    currentSpeed = Math.max(70, currentSpeed - 12);
+                    startGameLoop();
                 }
 
                 if (applesEatenInLevel >= applesNeededForLevel) {
                     currentLevel++;
                     applesEatenInLevel = 0;
                     applesNeededForLevel = generateRandomApples();
-                    currentSpeed = Math.max(60, currentSpeed - 10); 
-                    resetInterval();
+                    currentSpeed = Math.max(70, currentSpeed - 10); 
+                    startGameLoop();
                     alert(`كفو أبو عبدو! المرحلة ${currentLevel} 🎉 اجمع ${applesNeededForLevel} تفاحات!`);
                 }
 
@@ -235,11 +254,6 @@
                 snake.push({...snake[snake.length - 1]}); 
                 updateScoreboard();
             }
-        }
-
-        function resetInterval() {
-            clearInterval(gameInterval);
-            gameInterval = setInterval(gameLoop, currentSpeed);
         }
 
         function generateApple() {
@@ -257,15 +271,8 @@
             document.getElementById("apples-left").innerText = Math.max(0, applesNeededForLevel - applesEatenInLevel);
         }
 
-        function resetGame() {
-            snake = [{x: 10, y: 10}, {x: 10, y: 11}, {x: 10, y: 12}];
-            dx = 0; dy = -1; score = 0; currentLevel = 1; applesEatenInLevel = 0;
-            applesNeededForLevel = generateRandomApples(); currentSpeed = baseSpeed;
-            startGame();
-        }
-
         function drawGame() {
-            // خلفية شطرنج بنفسجية
+            // رسم خلفية الشطرنج البنفسجية
             for (let row = 0; row < gridCount; row++) {
                 for (let col = 0; col < gridCount; col++) {
                     ctx.fillStyle = (row + col) % 2 === 0 ? "#2c1654" : "#220f44";
@@ -278,7 +285,7 @@
             ctx.textBaseline = "top";
             ctx.fillText("🍎", apple.x * cellSize, apple.y * cellSize);
 
-            // رسم الدودة الانسيابية بالعيون
+            // رسم الدودة الانسيابية الدائرية بالعيون الكيوت
             snake.forEach((part, index) => {
                 ctx.fillStyle = index === 0 ? "#1e5e20" : "#4caf50";
                 ctx.beginPath();
@@ -289,6 +296,3 @@
                 ctx.fill();
                 ctx.closePath();
 
-                if (index === 0) {
-                    ctx.fillStyle = "#ffffff";
-                    ctx.beginPath();
