@@ -155,7 +155,7 @@
         let snake = [];
         let apple = {x: 5, y: 5};
         let dx = 0;
-        let dy = 0; 
+        let dy = -1; // جعلناها تتحرك فوراً للأعلى مثل نسختك القديمة تماماً لتعمل اللعبة مباشرة
         
         let score = 0;
         let highScore = 0;
@@ -178,7 +178,7 @@
                 {x: 10, y: 12}
             ];
             dx = 0;
-            dy = 0;
+            dy = -1;
             score = 0;
             applesEatenInLevel = 0;
             updateScoreboard();
@@ -191,17 +191,16 @@
         }
 
         function gameLoop() {
-            if (dx !== 0 || dy !== 0) {
-                moveSnake();
-                if (checkGameOver()) {
-                    alert(`حاول مجدداً يا بطل! أعلى نتيجة لك هي: ${highScore}`);
-                    currentLevel = 1;
-                    currentSpeed = baseSpeed;
-                    initGame();
-                    return;
-                }
-                checkApple();
+            moveSnake();
+            if (checkGameOver()) {
+                alert(`حاول مجدداً يا بطل! أعلى نتيجة لك هي: ${highScore}`);
+                currentLevel = 1;
+                currentSpeed = baseSpeed;
+                initGame();
+                startGameLoop();
+                return;
             }
+            checkApple();
             drawGame();
         }
 
@@ -212,6 +211,7 @@
         }
 
         function checkGameOver() {
+            if (snake.length === 0) return true;
             const head = snake[0];
             if (head.x < 0 || head.x >= gridCount || head.y < 0 || head.y >= gridCount) return true;
             for (let i = 1; i < snake.length; i++) {
@@ -263,7 +263,6 @@
         }
 
         function drawGame() {
-            // رسم الشطرنج البنفسجي الداكن
             for (let row = 0; row < gridCount; row++) {
                 for (let col = 0; col < gridCount; col++) {
                     ctx.fillStyle = (row + col) % 2 === 0 ? "#2c1654" : "#220f44";
@@ -271,12 +270,10 @@
                 }
             }
 
-            // رسم التفاحة 🍎
             ctx.font = `${cellSize - 2}px Arial`;
             ctx.textBaseline = "top";
             ctx.fillText("🍎", apple.x * cellSize, apple.y * cellSize);
 
-            // رسم الدودة الانسيابية
             snake.forEach((part, index) => {
                 ctx.fillStyle = index === 0 ? "#1e5e20" : "#4caf50";
                 ctx.beginPath();
@@ -296,3 +293,4 @@
                     ctx.fillStyle = "#000000";
                     ctx.beginPath();
                     ctx.arc(centerX - 3, centerY - 3, 1, 0, 2 * Math.PI);
+                    ctx.arc(centerX + 3, centerY - 3, 1, 0, 2 * Math.PI);
