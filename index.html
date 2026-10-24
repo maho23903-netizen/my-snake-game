@@ -1,252 +1,294 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المبرمج ابو عبدو محو - لعبة الأفعى</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لعبة الأفعى المتطورة - المبرمج ابو عبدو محو</title>
     <style>
-        body { 
-            background: #1e1e2a; 
-            color: white; 
-            text-align: center; 
-            font-family: sans-serif; 
-            margin: 0; 
-            padding: 10px; 
+        body {
+            background-color: #1a0933;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+            user-select: none;
+            touch-action: none;
+        }
+        h1 {
+            color: #d1b3ff;
+            margin: 5px 0;
+            font-size: 24px;
+        }
+        #scoreboard {
+            font-size: 16px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        #scoreboard span {
+            margin: 0 10px;
+        }
+        #control-selector {
+            margin: 10px 0;
+            padding: 5px;
+            background: #4a154b;
+            color: white;
+            border: 2px solid #d1b3ff;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        #game-canvas {
+            border: 4px solid #4a154b;
+            background-color: #2c1654;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        /* منطقة التحكم للموبايل */
+        #controls-container {
+            margin-top: 15px;
+            height: 140px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
         }
-        h1 { 
-            margin: 5px 0 15px 0; 
-            font-size: 26px; 
-            color: #00ff00;
-            text-shadow: 0 0 10px rgba(0,255,0,0.3);
+        /* نمط أزرار الأسهم */
+        #button-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-gap: 8px;
         }
-        .score-board { 
-            background: #28283d;
-            border: 2px solid #3d3d5c;
-            border-radius: 8px;
-            padding: 8px 20px;
-            display: flex; 
-            justify-content: center; 
-            gap: 30px; 
-            margin-bottom: 15px; 
-            font-size: 20px; 
-            font-weight: bold;
-            min-width: 320px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        .btn {
+            width: 50px;
+            height: 50px;
+            background: #4a154b;
+            border: 2px solid #d1b3ff;
+            color: white;
+            font-size: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
-        #score { color: #55ff55; }
-        #highScore { color: #ff5555; }
-        
-        /* تصميم الحاوية والكانفاس المربع */
-        .canvas-container {
+        .btn:active { background: #d1b3ff; color: #1a0933; }
+        #btn-up { grid-column: 2; }
+        #btn-left { grid-column: 1; }
+        #btn-right { grid-column: 3; }
+        #btn-down { grid-column: 2; }
+
+        /* نمط الدركسيون المتطور */
+        #steering-wheel {
+            width: 120px;
+            height: 120px;
+            border: 8px solid #d1b3ff;
+            border-radius: 50%;
+            background: radial-gradient(circle, #4a154b 30%, #2c1654 70%);
             position: relative;
-            background: #31314d;
-            padding: 4px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            cursor: grab;
+            box-shadow: 0 0 15px rgba(209, 179, 255, 0.4);
+            transition: transform 0.1s linear;
+            display: none; /* مخفي افتراضياً */
         }
-        canvas { 
-            display: block;
-            max-width: 90vw; 
-            max-height: 42vh; 
-            border-radius: 8px;
+        #steering-wheel::before, #steering-wheel::after {
+            content: '';
+            position: absolute;
+            background: #d1b3ff;
         }
-        
-        /* أزرار اللمس للموبايل */
-        .controls { 
-            display: grid; 
-            grid-template-columns: repeat(3, 68px); 
-            grid-template-rows: repeat(3, 68px); 
-            gap: 12px; 
-            justify-content: center; 
-            margin-top: 20px; 
+        /* عوارض الدركسيون الداخية ليظهر مثل سيارة حقيقية */
+        #steering-wheel::before { width: 100%; height: 6px; top: 50%; left: 0; transform: translateY(-50%); }
+        #steering-wheel::after { width: 6px; height: 50%; bottom: 0; left: 50%; transform: translateX(-50%); }
+        #wheel-center {
+            width: 24px;
+            height: 24px;
+            background: #ffda79;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
         }
-        .btn { 
-            background: #2d2d44; 
-            color: white; 
-            border: 2px solid #444466; 
-            border-radius: 18px; 
-            font-size: 24px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            -webkit-user-select: none; 
-            user-select: none; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4); 
-            transition: all 0.1s ease;
-        }
-        .btn:active { 
-            background: #55ff55; 
-            color: black; 
-            border-color: #55ff55;
-            box-shadow: 0 0 12px #55ff55; 
-        }
-        .up { grid-column: 2; }
-        .left { grid-column: 1; grid-row: 2; }
-        .right { grid-column: 3; grid-row: 2; }
-        .down { grid-column: 2; grid-row: 3; }
     </style>
 </head>
 <body>
 
-    <h1>(( المبرمج ابو عبدو محو )) 👑</h1>
+    <h1>👑 المبرمج ابو عبدو محو 👑</h1>
     
-    <div class="score-board">
-        <div id="score">النقاط: 0</div>
-        <div id="highScore">الأعلى: 0</div>
+    <div id="scoreboard">
+        <span>النقاط: <b id="score">0</b></span> | 
+        <span>الأعلى: <b id="high-score">0</b></span> <br>
+        <span style="color: #ffda79;">المرحلة: <b id="level">1</b></span> | 
+        <span style="color: #ff7979;">المتبقي: <b id="apples-left">0</b></span>
     </div>
 
-    <div class="canvas-container">
-        <canvas id="game" width="400" height="400"></canvas>
-    </div>
+    <br>
+    <select id="control-selector" onchange="switchControls(this.value)">
+        <option value="buttons">🕹️ التحكم عبر أزرار الأسهم</option>
+        <option value="wheel">🛞 التحكم عبر الدركسيون (طارة سيارة)</option>
+    </select>
 
-    <div class="controls">
-        <button class="btn up" onclick="changeDir('up')">▲</button>
-        <button class="btn left" onclick="changeDir('left')">◀</button>
-        <button class="btn right" onclick="changeDir('right')">▶</button>
-        <button class="btn down" onclick="changeDir('down')">▼</button>
+    <br>
+    <canvas id="game-canvas" width="400" height="400"></canvas>
+
+    <div id="controls-container">
+        <!-- أزرار الأسهم الافتراضية -->
+        <div id="button-controls">
+            <div class="btn" id="btn-up">▲</div>
+            <div class="btn" id="btn-left">◀</div>
+            <div class="btn" id="btn-right">▶</div>
+            <div class="btn" id="btn-down">▼</div>
+        </div>
+
+        <!-- دركسيون السيارة المطور -->
+        <div id="steering-wheel">
+            <div id="wheel-center"></div>
+        </div>
     </div>
 
     <script>
-        const canvas = document.getElementById("game");
+        const canvas = document.getElementById("game-canvas");
         const ctx = canvas.getContext("2d");
-        
-        const gridCount = 20;
-        const tileSize = canvas.width / gridCount;
 
-        let snake = [{x: 10, y: 10}];
-        let food = {x: 5, y: 5};
-        let dx = 0, dy = 0, score = 0;
+        const cellSize = 20;
+        const gridCount = canvas.width / cellSize;
         
-        // تبدأ الحركة بطيئة ومريحة جداً بناءً على طلبك
-        let baseSpeed = 160; 
+        let snake = [{x: 10, y: 10}, {x: 10, y: 11}, {x: 10, y: 12}];
+        let apple = {x: 5, y: 5};
+        let dx = 0;
+        let dy = -1;
+        
+        let score = 0;
+        let highScore = 0;
+        let currentLevel = 1;
+        let applesEatenInLevel = 0;
+        let applesNeededForLevel = generateRandomApples();
+        
+        let baseSpeed = 150;
         let currentSpeed = baseSpeed;
-        let gameTimeout;
+        let gameInterval;
 
-        let savedHighScore = localStorage.getItem("snakeHighScore") || 0;
-        document.getElementById("highScore").innerText = "الأعلى: " + savedHighScore;
-        
-        function main() {
-            if (checkEnd()) { 
-                if (score > savedHighScore) {
-                    savedHighScore = score;
-                    localStorage.setItem("snakeHighScore", savedHighScore);
-                    document.getElementById("highScore").innerText = "الأعلى: " + savedHighScore;
-                    alert("🏆 عشت يا مبرمج! حققت رقماً قياسياً جديداً: " + score);
-                } else {
-                    alert("💥 خسرت! اضغط موافق لتجرب مجدداً يا بطل."); 
-                }
+        function generateRandomApples() {
+            return Math.floor(Math.random() * 4) + 2; 
+        }
+
+        function startGame() {
+            updateScoreboard();
+            generateApple();
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, currentSpeed);
+        }
+
+        function gameLoop() {
+            moveSnake();
+            if (checkGameOver()) {
+                alert(`حاول مجدداً يا بطل! أعلى نتيجة لك هي: ${highScore}`);
                 resetGame();
+                return;
             }
-            
-            gameTimeout = setTimeout(function() {
-                drawBackground();
-                drawFood();
-                moveSnake();
-                drawSnake();
-                main();
-            }, currentSpeed);
-        }
-        
-        // رسم خلفية مربعات الشطرنج البنفسجية الداكنة مثل الصورة تماماً
-        function drawBackground() {
-            for (let r = 0; r < gridCount; r++) {
-                for (let c = 0; c < gridCount; c++) {
-                    if ((r + c) % 2 === 0) {
-                        ctx.fillStyle = "#2c2c44";
-                    } else {
-                        ctx.fillStyle = "#33334d";
-                    }
-                    ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
-                }
-            }
-        }
-
-        // رسم الأفعى بلون أخضر عشبي فاقع ومقسمة لمربعات واضحة
-        function drawSnake() {
-            snake.forEach((part, index) => {
-                ctx.fillStyle = index === 0 ? "#4cd94c" : "#55ff55"; 
-                ctx.fillRect(part.x * tileSize, part.y * tileSize, tileSize, tileSize);
-                
-                // إضافة إطار خفيف جداً بين المربعات لتظهر مقسمة باحترافية
-                ctx.strokeStyle = "#2c2c44";
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(part.x * tileSize, part.y * tileSize, tileSize, tileSize);
-            });
+            checkApple();
+            drawGame();
         }
 
         function moveSnake() {
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
             snake.unshift(head);
-            
-            if (snake[0].x === food.x && snake[0].y === food.y) { 
-                score++; 
-                document.getElementById("score").innerText = "النقاط: " + score; 
-                generateFoodLocation();
-                
-                // السرعة ترتفع حبة صغييييرة جداً (8 ملي ثانية فقط) كل 6 نقاط بناءً على طلبك
-                if (score % 6 === 0 && currentSpeed > 60) {
-                    currentSpeed -= 8;
-                }
-            } else { 
-                snake.pop(); 
-            }
+            snake.pop();
         }
 
-        // رسم الأكل على شكل تفاحة حقيقية 🍎 منسقة داخل المربع
-        function drawFood() {
-            ctx.font = `${tileSize - 2}px Arial`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("🍎", food.x * tileSize + tileSize/2, food.y * tileSize + tileSize/2);
-        }
-
-        function generateFoodLocation() {
-            food = {
-                x: Math.floor(Math.random() * gridCount),
-                y: Math.floor(Math.random() * gridCount)
-            };
-            // التأكد أن التفاحة لا تظهر فوق جسم الأفعى
-            for (let part of snake) {
-                if (part.x === food.x && part.y === food.y) {
-                    generateFoodLocation();
-                    break;
-                }
-            }
-        }
-        
-        function checkEnd() {
-            if (snake[0].x < 0 || snake[0].x >= gridCount || snake[0].y < 0 || snake[0].y >= gridCount) return true;
+        function checkGameOver() {
+            const head = snake[0];
+            if (head.x < 0 || head.x >= gridCount || head.y < 0 || head.y >= gridCount) return true;
             for (let i = 1; i < snake.length; i++) {
-                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+                if (snake[i].x === head.x && snake[i].y === head.y) return true;
             }
             return false;
         }
 
-        function changeDir(dir) {
-            if (dir === 'up' && dy === 0) { dx = 0; dy = -1; }
-            if (dir === 'down' && dy === 0) { dx = 0; dy = 1; }
-            if (dir === 'left' && dx === 0) { dx = -1; dy = 0; }
-            if (dir === 'right' && dx === 0) { dx = 1; dy = 0; }
+        function checkApple() {
+            const head = snake[0];
+            if (head.x === apple.x && head.y === apple.y) {
+                score++;
+                applesEatenInLevel++;
+                if (score > highScore) highScore = score;
+
+                if (score % 6 === 0) {
+                    currentSpeed = Math.max(60, currentSpeed - 12);
+                    resetInterval();
+                }
+
+                if (applesEatenInLevel >= applesNeededForLevel) {
+                    currentLevel++;
+                    applesEatenInLevel = 0;
+                    applesNeededForLevel = generateRandomApples();
+                    currentSpeed = Math.max(60, currentSpeed - 10); 
+                    resetInterval();
+                    alert(`كفو أبو عبدو! المرحلة ${currentLevel} 🎉 اجمع ${applesNeededForLevel} تفاحات!`);
+                }
+
+                generateApple();
+                snake.push({...snake[snake.length - 1]}); 
+                updateScoreboard();
+            }
+        }
+
+        function resetInterval() {
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, currentSpeed);
+        }
+
+        function generateApple() {
+            apple.x = Math.floor(Math.random() * gridCount);
+            apple.y = Math.floor(Math.random() * gridCount);
+            snake.forEach(part => {
+                if (part.x === apple.x && part.y === apple.y) generateApple();
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById("score").innerText = score;
+            document.getElementById("high-score").innerText = highScore;
+            document.getElementById("level").innerText = currentLevel;
+            document.getElementById("apples-left").innerText = Math.max(0, applesNeededForLevel - applesEatenInLevel);
         }
 
         function resetGame() {
-            clearTimeout(gameTimeout);
-            snake = [{x: 10, y: 10}]; dx = 0; dy = 0; score = 0; 
-            currentSpeed = baseSpeed;
-            document.getElementById("score").innerText = "النقاط: 0";
+            snake = [{x: 10, y: 10}, {x: 10, y: 11}, {x: 10, y: 12}];
+            dx = 0; dy = -1; score = 0; currentLevel = 1; applesEatenInLevel = 0;
+            applesNeededForLevel = generateRandomApples(); currentSpeed = baseSpeed;
+            startGame();
         }
 
-        window.addEventListener("keydown", e => {
-            if (e.key === "ArrowUp") changeDir('up');
-            if (e.key === "ArrowDown") changeDir('down');
-            if (e.key === "ArrowLeft") changeDir('left');
-            if (e.key === "ArrowRight") changeDir('right');
-        });
-        
-        drawBackground();
-        main();
-    </script>
-</body>
-</html>
+        function drawGame() {
+            // خلفية شطرنج بنفسجية
+            for (let row = 0; row < gridCount; row++) {
+                for (let col = 0; col < gridCount; col++) {
+                    ctx.fillStyle = (row + col) % 2 === 0 ? "#2c1654" : "#220f44";
+                    ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                }
+            }
+
+            // رسم التفاحة 🍎
+            ctx.font = `${cellSize - 2}px Arial`;
+            ctx.textBaseline = "top";
+            ctx.fillText("🍎", apple.x * cellSize, apple.y * cellSize);
+
+            // رسم الدودة الانسيابية بالعيون
+            snake.forEach((part, index) => {
+                ctx.fillStyle = index === 0 ? "#1e5e20" : "#4caf50";
+                ctx.beginPath();
+                let centerX = part.x * cellSize + cellSize / 2;
+                let centerY = part.y * cellSize + cellSize / 2;
+                let radius = cellSize / 2 - 1;
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.closePath();
+
+                if (index === 0) {
+                    ctx.fillStyle = "#ffffff";
+                    ctx.beginPath();
