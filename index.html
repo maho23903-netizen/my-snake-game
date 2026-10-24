@@ -155,8 +155,7 @@
         let snake = [];
         let apple = {x: 5, y: 5};
         let dx = 0;
-        let dy = 0; // جعلناها 0 لتقف الدودة في مكانها عند البداية ولا تموت فوراً
-        let gameStarted = false; // متغير للتحقق هل بدأ اللاعب الحركة أم لا
+        let dy = 0; 
         
         let score = 0;
         let highScore = 0;
@@ -173,7 +172,6 @@
         }
 
         function initGame() {
-            // وضع الدودة في منتصف الشاشة تماماً لتبدأ بأمان
             snake = [
                 {x: 10, y: 10},
                 {x: 10, y: 11},
@@ -181,12 +179,10 @@
             ];
             dx = 0;
             dy = 0;
-            gameStarted = false;
             score = 0;
             applesEatenInLevel = 0;
             updateScoreboard();
             generateApple();
-            drawGame(); // رسم اللوحة لأول مرة ليرى اللاعب الدودة واقفة جاهزة
         }
 
         function startGameLoop() {
@@ -195,22 +191,17 @@
         }
 
         function gameLoop() {
-            // إذا لم يضغط اللاعب على أي اتجاه بعد، لا تحرك الدودة بل ارسمها فقط
-            if (dx === 0 && dy === 0) {
-                drawGame();
-                return;
+            if (dx !== 0 || dy !== 0) {
+                moveSnake();
+                if (checkGameOver()) {
+                    alert(`حاول مجدداً يا بطل! أعلى نتيجة لك هي: ${highScore}`);
+                    currentLevel = 1;
+                    currentSpeed = baseSpeed;
+                    initGame();
+                    return;
+                }
+                checkApple();
             }
-
-            moveSnake();
-            if (checkGameOver()) {
-                alert(`حاول مجدداً يا بطل! أعلى نتيجة لك هي: ${highScore}`);
-                currentLevel = 1;
-                currentSpeed = baseSpeed;
-                initGame();
-                startGameLoop();
-                return;
-            }
-            checkApple();
             drawGame();
         }
 
@@ -272,7 +263,7 @@
         }
 
         function drawGame() {
-            // رسم خلفية الشطرنج البنفسجية
+            // رسم الشطرنج البنفسجي الداكن
             for (let row = 0; row < gridCount; row++) {
                 for (let col = 0; col < gridCount; col++) {
                     ctx.fillStyle = (row + col) % 2 === 0 ? "#2c1654" : "#220f44";
@@ -285,7 +276,7 @@
             ctx.textBaseline = "top";
             ctx.fillText("🍎", apple.x * cellSize, apple.y * cellSize);
 
-            // رسم الدودة الانسيابية الدائرية بالعيون الكيوت
+            // رسم الدودة الانسيابية
             snake.forEach((part, index) => {
                 ctx.fillStyle = index === 0 ? "#1e5e20" : "#4caf50";
                 ctx.beginPath();
@@ -296,3 +287,12 @@
                 ctx.fill();
                 ctx.closePath();
 
+                if (index === 0) {
+                    ctx.fillStyle = "#ffffff";
+                    ctx.beginPath();
+                    ctx.arc(centerX - 3, centerY - 3, 2, 0, 2 * Math.PI);
+                    ctx.arc(centerX + 3, centerY - 3, 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.fillStyle = "#000000";
+                    ctx.beginPath();
+                    ctx.arc(centerX - 3, centerY - 3, 1, 0, 2 * Math.PI);
